@@ -8,14 +8,14 @@ The file follows the following format:
      Every command is a single character that takes up a line
      Any command that requires arguments must have those arguments in the second line.
      The commands are as follows:
-	 circle: add a circle to the edge matrix - 
-	         takes 4 arguments (cx, cy, cz, r)
-	 hermite: add a hermite curve to the edge matrix -
-	          takes 8 arguments (x0, y0, x1, y1, rx0, ry0, rx1, ry1)
-	 bezier: add a bezier curve to the edge matrix -
-	         takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
-         line: add a line to the edge matrix -
-               takes 6 arguemnts (x0, y0, z0, x1, y1, z1)
+    circle: add a circle to the edge matrix - 
+        takes 4 arguments (cx, cy, cz, r)
+    hermite: add a hermite curve to the edge matrix -
+        takes 8 arguments (x0, y0, x1, y1, rx0, ry0, rx1, ry1)
+    bezier: add a bezier curve to the edge matrix -
+        takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
+    line: add a line to the edge matrix -
+               takes 6 arguments (x0, y0, z0, x1, y1, z1)
          ident: set the transform matrix to the identity matrix -
          scale: create a scale matrix,
                 then multiply the transform matrix by the scale matrix -
@@ -37,43 +37,44 @@ The file follows the following format:
          quit: end parsing
 See the file script for an example of the file format
 """
-ARG_COMMANDS = [ 'line', 'scale', 'move', 'rotate', 'save' ]
+ARG_COMMANDS = ['line', 'scale', 'move', 'rotate', 'save', 'bezier', 'hermite', 'circle']
+STEP = 0.001
 
-def parse_file( fname, edges, transform, screen, color ):
 
+def parse_file(fname, edges, transform, screen, color):
     f = open(fname)
     lines = f.readlines()
 
     c = 0
     while c < len(lines):
         line = lines[c].strip()
-        #print ':' + line + ':'
+        # print ':' + line + ':'
 
         if line in ARG_COMMANDS:
-            c+= 1
+            c += 1
             args = lines[c].strip().split(' ')
 
-        if line == 'line':            
-            #print 'LINE\t' + str(args)
+        if line == 'line':
+            # print 'LINE\t' + str(args)
 
-            add_edge( edges,
-                      float(args[0]), float(args[1]), float(args[2]),
-                      float(args[3]), float(args[4]), float(args[5]) )
+            add_edge(edges,
+                     float(args[0]), float(args[1]), float(args[2]),
+                     float(args[3]), float(args[4]), float(args[5]))
 
         elif line == 'scale':
-            #print 'SCALE\t' + str(args)
+            # print 'SCALE\t' + str(args)
             t = make_scale(float(args[0]), float(args[1]), float(args[2]))
             matrix_mult(t, transform)
 
         elif line == 'move':
-            #print 'MOVE\t' + str(args)
+            # print 'MOVE\t' + str(args)
             t = make_translate(float(args[0]), float(args[1]), float(args[2]))
             matrix_mult(t, transform)
 
         elif line == 'rotate':
-            #print 'ROTATE\t' + str(args)
+            # print 'ROTATE\t' + str(args)
             theta = float(args[1]) * (math.pi / 180)
-            
+
             if args[0] == 'x':
                 t = make_rotX(theta)
             elif args[0] == 'y':
@@ -81,12 +82,23 @@ def parse_file( fname, edges, transform, screen, color ):
             else:
                 t = make_rotZ(theta)
             matrix_mult(t, transform)
-                
+
         elif line == 'ident':
             ident(transform)
 
         elif line == 'apply':
-            matrix_mult( transform, edges )
+            matrix_mult(transform, edges)
+
+        elif line == 'bezier':
+            add_curve(edges, float(args[0]), float(args[1]), float(args[2]), float(args[3]), float(args[4]),
+                      float(args[5]), float(args[6]), float(args[7]), STEP, 'bezier')
+
+        elif line == 'hermite':
+            add_curve(edges, float(args[0]), float(args[1]), float(args[2]), float(args[3]), float(args[4]),
+                      float(args[5]), float(args[6]), float(args[7]), STEP, 'hermite')
+
+        elif line == 'circle':
+            add_circle(edges, float(args[0]), float(args[1]), float(args[2]), float(args[3]), STEP)
 
         elif line == 'display' or line == 'save':
             clear_screen(screen)
@@ -96,5 +108,6 @@ def parse_file( fname, edges, transform, screen, color ):
                 display(screen)
             else:
                 save_extension(screen, args[0])
-            
-        c+= 1
+                print(args[0])
+
+        c += 1
